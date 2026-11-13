@@ -1,0 +1,28 @@
+{
+  "name": "detail-explorer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Exploded axonometric viewer for Rhino models",
+  "scripts": {
+    "postinstall": "node scripts/copy-rhino3dm.mjs",
+    "predev": "node scripts/copy-rhino3dm.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-rhino3dm.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "sample:3dm": "node --experimental-strip-types --no-warnings scripts/make-sample-3dm.mts"
+  },
+  "dependencies": {
+    "rhino3dm": "^8.35.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/three": "^0.187.0",
+    "typescript": "~5.9",
+    "vite": "^7.3.8",
+    "vitest": "^5.1.0"
+  }
+}

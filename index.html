@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detail Explorer</title>
+    <meta name="description" content="Exploded axonometric viewer for Rhino models" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 8 12 13l9.5-5L12 3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m2.5 12 9.5 5 9.5-5" fill="none" stroke="#C2410C" stroke-width="1.7" stroke-linejoin="round"/><path d="m2.5 16 9.5 5 9.5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span>Detail Explorer</span>
+      </div>
+      <div class="topbar-file">
+        <span class="filename mono" id="fileName">—</span>
+        <span class="badge" id="unitsBadge">—</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" id="openBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+          <span>Open model</span>
+        </button>
+        <button class="btn" id="shareBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
+          <span>Share view</span>
+        </button>
+        <div class="export-wrap">
+          <button class="btn btn-primary" id="exportBtn" type="button" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></svg>
+            <span>Export PNG</span>
+          </button>
+          <div class="popover" id="exportMenu" hidden>
+            <div class="popover-title">Export PNG</div>
+            <div class="seg seg-full" id="exportScale">
+              <button type="button" data-value="2" class="active">2×</button>
+              <button type="button" data-value="4">4×</button>
+            </div>
+            <label class="check"><input type="checkbox" id="exportTransparent" /><span>Transparent background</span></label>
+            <button class="btn btn-primary btn-block" id="exportGo" type="button">Download</button>
+          </div>
+        </div>
+        <input type="file" id="fileInput" accept=".3dm,.glb,.gltf" hidden />
+        <input type="file" id="viewsInput" accept=".json,application/json" hidden />
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel panel-left" aria-label="Layers">
+        <div class="panel-head">
+          <h2>Layers</h2>
+          <span class="muted" id="layerSource">From Rhino layer order</span>
+        </div>
+        <ul class="layer-list" id="layerList"></ul>
+        <p class="hint">Drag rows to change explode order. Click a layer here or in the model to select it.</p>
+        <button class="dropzone" id="dropZone" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Zm0 0v0M4 7.5 12 12l8-4.5M12 12v9"/></svg>
+          <b>Drop a .3dm or .glb</b>
+          <span>Layers become explodable parts</span>
+        </button>
+      </aside>
+
+      <section class="viewport-wrap">
+        <div class="viewport" id="viewport">
+          <div class="float float-tl">
+            <div class="seg" id="presetSeg" role="group" aria-label="View preset">
+              <button type="button" data-value="isometric">Isometric</button>
+              <button type="button" data-value="dimetric">Dimetric</button>
+              <button type="button" data-value="planometric">Planometric</button>
+              <button type="button" data-value="front">Front</button>
+              <button type="button" data-value="top">Top</button>
+            </div>
+            <div class="seg" id="projSeg" role="group" aria-label="Projection">
+              <button type="button" data-value="orthographic">Orthographic</button>
+              <button type="button" data-value="perspective">Perspective</button>
+            </div>
+          </div>
+          <div class="float float-tr">
+            <div class="seg" id="styleSeg" role="group" aria-label="Render style">
+              <button type="button" data-value="shaded">Shaded</button>
+              <button type="button" data-value="clay">Clay</button>
+              <button type="button" data-value="line">Line</button>
+            </div>
+          </div>
+          <div class="banner" id="banner" hidden>
+            <span id="bannerText"></span>
+            <button type="button" class="banner-close" id="bannerClose" aria-label="Dismiss">×</button>
+          </div>
+          <div class="viewport-hint">Drag to orbit · Shift-drag to pan · Scroll to zoom</div>
+          <div class="drop-overlay" id="dropOverlay"><div>Drop .3dm or .glb to load</div></div>
+          <div class="loading" id="loading" hidden><div class="spinner"></div><span id="loadingText">Loading…</span></div>
+        </div>
+      </section>
+
+      <aside class="panel panel-right" aria-label="Explode controls">
+        <section class="group">
+          <div class="group-head">
+            <h2>Explode</h2>
+            <span class="readout accent mono" id="explodeReadout">100%</span>
+          </div>
+          <input type="range" id="explodeSlider" min="0" max="100" step="1" value="100" aria-label="Explode amount" />
+          <div class="captions"><span>Assembled</span><span>Fully exploded</span></div>
+          <div class="field-label">Spacing</div>
+          <div class="seg seg-full seg-lg" id="spacingSeg">
+            <button type="button" data-value="even">Even</button>
+            <button type="button" data-value="thickness">By thickness</button>
+          </div>
+          <div class="row-label"><span>Gap</span><span class="mono" id="gapReadout">1.5 m</span></div>
+          <input type="range" id="gapSlider" min="0" max="100" step="1" value="30" aria-label="Gap size" />
+          <label class="check"><input type="checkbox" id="guidesToggle" checked /><span>Explode guide lines</span></label>
+          <label class="check"><input type="checkbox" id="labelsToggle" checked /><span>Layer labels</span></label>
+        </section>
+
+        <section class="group">
+          <div class="group-head">
+            <h2>Selected layer</h2>
+            <span class="selected-name"><i class="swatch" id="selSwatch"></i><b id="selName">—</b></span>
+          </div>
+          <div class="row-label"><span>Extra offset</span><span class="mono" id="offsetReadout">0 mm</span></div>
+          <input type="range" id="offsetSlider" min="-5000" max="10000" step="50" value="0" aria-label="Extra offset" />
+          <div class="row-label"><span>Opacity</span><span class="mono" id="opacityReadout">100%</span></div>
+          <input type="range" id="opacitySlider" min="0" max="100" step="1" value="100" aria-label="Opacity" />
+        </section>
+
+        <section class="group">
+          <div class="group-head"><h2>Saved views</h2></div>
+          <div class="chips" id="viewChips"></div>
+          <div class="links">
+            <button type="button" class="link" id="viewsExport">Export JSON</button>
+            <span>·</span>
+            <button type="button" class="link" id="viewsImport">Import JSON</button>
+          </div>
+        </section>
+
+        <section class="group">
+          <div class="group-head">
+            <h2>Section plane</h2>
+            <label class="check check-inline"><input type="checkbox" id="sectionToggle" /><span>Enable</span></label>
+          </div>
+          <input type="range" id="sectionSlider" min="0" max="100" step="1" value="50" aria-label="Section height" disabled />
+        </section>
+
+        <section class="group group-last">
+          <div class="field-label">Direction</div>
+          <div class="seg seg-full seg-lg" id="directionSeg">
+            <button type="button" data-value="x">X</button>
+            <button type="button" data-value="y">Y</button>
+            <button type="button" data-value="z">Z</button>
+            <button type="button" data-value="radial">Radial</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="statusbar mono" id="statusBar"></footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
