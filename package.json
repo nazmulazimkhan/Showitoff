@@ -11,7 +11,8 @@
     "prebuild": "node scripts/copy-rhino3dm.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sample:3dm": "node --experimental-strip-types --no-warnings scripts/make-sample-3dm.mts"
   },
   "dependencies": {
     "rhino3dm": "^8.35.0",

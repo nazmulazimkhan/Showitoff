@@ -210,7 +210,7 @@ svg { flex: none; }
 }
 .viewport-canvas { position: absolute; inset: 0; display: block; touch-action: none; }
 .viewport-labels { position: absolute; inset: 0; pointer-events: none; }
-.float { position: absolute; top: 14px; display: flex; gap: 8px; z-index: 5; flex-wrap: wrap; }
+.float { position: absolute; top: 14px; display: flex; gap: 8px; z-index: 5; flex-wrap: wrap; align-items: flex-start; }
 .float-tl { left: 14px; right: 200px; }
 .float-tr { right: 14px; }
 .seg {
@@ -461,9 +461,14 @@ input[type='range']:focus-visible { outline: 2px solid var(--accent); outline-of
   .panel-left { order: 2; border: 0; border-top: 1px solid var(--border); overflow: visible; }
   .panel-right { order: 3; border: 0; border-top: 1px solid var(--border); overflow: visible; }
   .dropzone { margin-top: 0; }
-  .float-tr { top: auto; bottom: 34px; right: 10px; }
   .float { top: 10px; }
-  .float-tl { left: 10px; right: 10px; }
+  .float-tr { top: auto; bottom: 10px; right: 10px; }
+  .float-tl { left: 10px; right: 10px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .float-tl .seg { flex: none; }
   .seg button { padding: 5px 8px; font-size: 12px; }
   .viewport-hint { display: none; }
+  .gizmo { bottom: 52px; }
+}
+@media (max-width: 600px) {
+  .label-text { display: none; }
 }

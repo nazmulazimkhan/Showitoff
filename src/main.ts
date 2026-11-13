@@ -219,9 +219,12 @@ function select(id: string | null) {
 }
 
 function setExplode(patch: Partial<ViewState['explode']>, animate = true) {
+  const directionChanged = patch.direction !== undefined && patch.direction !== state.explode.direction;
   state.explode = { ...state.explode, ...patch };
   const { factor, gap, spacing, direction } = state.explode;
   viewer.setExplode({ factor, gap, spacing, direction }, animate);
+  // the exploded extents change shape completely with direction: re-frame the camera
+  if (directionChanged) viewer.fit();
   viewer.setGuides(state.explode.guides);
   viewer.setLabels(state.explode.labels);
   renderControls();

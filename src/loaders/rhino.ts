@@ -61,7 +61,10 @@ export async function load3dm(buffer: ArrayBuffer, fileName: string): Promise<Lo
       const mesh = c as THREE.Mesh;
       if (!mesh.isMesh) return;
       const m = mesh.material as THREE.Material;
-      if (m.name !== DEFAULT_MATERIAL_NAME) return;
+      if (m.name !== DEFAULT_MATERIAL_NAME) {
+        fixRhinoMaterial(m as THREE.MeshPhysicalMaterial);
+        return;
+      }
       const attrs = attributesOf(mesh);
       const layer = attrs?.layerIndex !== undefined ? rhinoLayers.find((l) => l.index === attrs.layerIndex) : undefined;
       const hex = attrs?.drawColor ? rgbToHex(attrs.drawColor) : layer?.color ? rgbToHex(layer.color) : '#CFCFCB';
@@ -121,6 +124,23 @@ export async function load3dm(buffer: ArrayBuffer, fileName: string): Promise<Lo
     layers,
     warnings,
   };
+}
+
+/**
+ * 3DMLoader builds colours from Rhino's 0–255 values without colour management, so they
+ * render washed out; treat them as sRGB. Translucent materials become "glass" so they
+ * stay see-through (and sorted) in every render style.
+ */
+function fixRhinoMaterial(m: THREE.MeshPhysicalMaterial) {
+  if (m.userData.rhinoFixed) return;
+  m.userData.rhinoFixed = true;
+  m.color?.convertSRGBToLinear();
+  m.emissive?.convertSRGBToLinear();
+  if (m.transparent && m.opacity < 0.95) {
+    m.userData.glass = true;
+    m.depthWrite = false;
+    m.side = THREE.DoubleSide;
+  }
 }
 
 function countMeshes(g: THREE.Object3D): number {

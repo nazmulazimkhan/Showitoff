@@ -141,7 +141,7 @@ export function computeExplode(layers: ExplodeLayer[], params: ExplodeParams): E
   if (layers.length === 0) return { offsets, recenter: [0, 0, 0], axis: [0, 0, 0] };
 
   if (params.direction === 'radial') {
-    return radial(layers, f, params.gap, extra);
+    return radial(layers, f, params.gap, params.spacing, extra);
   }
 
   const axis = AXES[params.direction];
@@ -159,30 +159,31 @@ export function computeExplode(layers: ExplodeLayer[], params: ExplodeParams): E
 }
 
 /**
- * Radial: each layer moves away from the model centre along the line from the centre to
- * its own centre. Concentric layers (common: a building's layers share a plan centre)
- * fall back to the vertical so they still separate. Distance grows with stack rank so
- * layers sharing a direction don't collide.
+ * Radial: layers spread outward from the model centre. Vertically they get the same
+ * clearance as the Z mode but split symmetrically about the middle of the stack (upper
+ * layers rise, lower ones sink); horizontally each layer is pushed away from the centre
+ * in proportion to how far its own centre sits from it (so off-centre parts fan out).
  */
-function radial(layers: ExplodeLayer[], f: number, gap: number, extra: Record<string, number>): ExplodeResult {
+function radial(layers: ExplodeLayer[], f: number, gap: number, spacing: Spacing, extra: Record<string, number>): ExplodeResult {
   const offsets: Record<string, Vec3> = {};
   const all = unionBounds(layers.map((l) => l.bounds))!;
   const c = boundsCenter(all);
-  const size = Math.max(all.max[0] - all.min[0], all.max[1] - all.min[1], all.max[2] - all.min[2]) || 1;
-  const eps = size * 1e-3;
-  const n = layers.length;
+  const travel = fullTravel(layers, gap, spacing, 2);
+  const mid = (travel[0] + travel[travel.length - 1]) / 2;
   layers.forEach((l, i) => {
     const lc = boundsCenter(l.bounds);
-    let d: Vec3 = [lc[0] - c[0], lc[1] - c[1], lc[2] - c[2]];
-    let len = Math.hypot(d[0], d[1], d[2]);
-    if (len < eps) {
-      d = [0, 0, 1];
-      len = 1;
+    const h: Vec3 = [lc[0] - c[0], lc[1] - c[1], 0];
+    const v = (travel[i] - mid) * f;
+    const off: Vec3 = [h[0] * f, h[1] * f, v];
+    const len = Math.hypot(off[0], off[1], off[2]);
+    const e = extra[l.id] ?? 0;
+    if (e) {
+      const dir: Vec3 = len > 1e-9 ? [off[0] / len, off[1] / len, off[2] / len] : [0, 0, 1];
+      off[0] += dir[0] * e;
+      off[1] += dir[1] * e;
+      off[2] += dir[2] * e;
     }
-    const dir: Vec3 = [d[0] / len, d[1] / len, d[2] / len];
-    const rank = n - 1 - i; // base = 0
-    const dist = (Math.hypot(lc[0] - c[0], lc[1] - c[1], lc[2] - c[2]) + gap * (rank + 1)) * f + (extra[l.id] ?? 0);
-    offsets[l.id] = scale(dir, dist);
+    offsets[l.id] = off;
   });
   return { offsets, recenter: [0, 0, 0], axis: [0, 0, 0] };
 }

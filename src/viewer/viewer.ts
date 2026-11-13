@@ -489,7 +489,7 @@ export class Viewer {
     this.persp.position.add(shift);
     this.controls.target.add(shift);
     // leave a column on the right for labels and room for the floating toolbars
-    const labelPx = this.labelsOn ? Math.min(230, this.width * 0.3) : 0;
+    const labelPx = this.labelsOn ? (window.innerWidth <= 600 ? 40 : Math.min(240, this.width * 0.3)) : 0;
     const availW = this.width * 0.92 - labelPx;
     const availH = this.height - 150;
     this.ortho.zoom = Math.max(

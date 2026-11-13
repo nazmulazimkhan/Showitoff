@@ -80,7 +80,8 @@ export interface LabelSnapshot {
 }
 
 const CARD_H = 34;
-const CARD_W = 210;
+const CARD_W = 230;
+const CARD_W_COMPACT = 30; // numbers only, below 600 px (see styles.css)
 
 /**
  * Layer labels as CSS2D overlays: each is anchored at the layer's right-most corner on
@@ -168,7 +169,8 @@ export class Labels {
       }
       active.push({ id: l.id, anchorWorld: best, ax: bestS.x, ay: bestS.y });
     }
-    const colX = Math.min(maxX + 40, width - CARD_W - 8);
+    const cardW = window.innerWidth <= 600 ? CARD_W_COMPACT : CARD_W;
+    const colX = Math.min(maxX + 40, width - cardW - 8);
     const ys = layoutLabels(
       active.map((a) => a.ay),
       { height: CARD_H, spacing: 6, minY: 48, maxY: height - 36 },

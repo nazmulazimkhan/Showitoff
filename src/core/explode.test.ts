@@ -156,6 +156,22 @@ describe('radial', () => {
     expect(r1.offsets.cladding[2]).toBeGreaterThan(0);
     expect(r1.offsets.landscape[2]).toBeLessThan(0);
   });
+  it('keeps the vertical clearance of the Z mode', () => {
+    const r = computeExplode(station, { factor: 1, gap: 1, spacing: 'even', direction: 'radial' });
+    const moved = station.map((l) => translateBounds(l.bounds, r.offsets[l.id]));
+    for (let i = 0; i < moved.length - 1; i++) {
+      expect(moved[i].min[2] - moved[i + 1].max[2]).toBeGreaterThanOrEqual(1 - 1e-9);
+    }
+  });
+  it('pushes off-centre layers outward horizontally', () => {
+    const layers: ExplodeLayer[] = [
+      { id: 'east', bounds: box([5, -1, 0], [7, 1, 1]) },
+      { id: 'west', bounds: box([-7, -1, 0], [-5, 1, 1]) },
+    ];
+    const r = computeExplode(layers, { factor: 1, gap: 0, spacing: 'even', direction: 'radial' });
+    expect(r.offsets.east[0]).toBeGreaterThan(0);
+    expect(r.offsets.west[0]).toBeLessThan(0);
+  });
 });
 
 describe('helpers', () => {
